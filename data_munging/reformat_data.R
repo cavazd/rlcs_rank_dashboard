@@ -11,10 +11,10 @@ rm(list=ls())
 # load in data for the given region
 # -------------------------
 
-region <- "eu"
+region <- "na"
 
 score_df <- read.csv(
-  file = paste0("data/rlcs_", region, "_points.csv"),
+  file = paste0("../data/rlcs_", region, "_points.csv"),
   stringsAsFactors = T,
 )
 
@@ -36,7 +36,7 @@ for (event in 1:num_events) {
     # remove the different event vars
     select(-(2:(event+1))) %>%
     # arrange by score and team (alphabetical)
-    arrange(desc(score), team_name) %>%
+    arrange(desc(score), team) %>%
     # add ranking after sorting (1 to number of teams)
     # add the event name in as well
     mutate('ranking' = c(1:nrow(.)),
@@ -50,7 +50,7 @@ for (event in 1:num_events) {
 # -------------------------
 write.csv(
   x = rank_df,
-  file = paste0("data/rlcs_", region, "_ranks.csv"),
+  file = paste0("../data/rlcs_", region, "_ranks.csv"),
   row.names = F
 )
 
