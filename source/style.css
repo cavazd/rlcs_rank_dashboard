@@ -38,3 +38,27 @@
 .x {
   font-size: 12px;
 }
+
+.regSel {
+  fill: White;
+  stroke: black;
+}
+
+.regText {
+  fill: black;
+  stroke: none;
+  font-size: 26px;
+}
+
+/* #regBtn {
+  position: absolute;
+  top: 28px;
+  right: 350px;
+  font-size: 28px;
+}
+
+#regionAttrSelector {
+  position: absolute;
+  top: 28px;
+  right: 200px;
+} */

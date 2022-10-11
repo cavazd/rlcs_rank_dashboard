@@ -2,6 +2,10 @@
 
 BUMP_CIRC_RAD = 10;
 AXIS_TEXT_BUFFER = 15;
+REG_SEL_BUFFER = 30;
+REG_SEL_HEIGHT = 40;
+REG_SEL_WIDTH = 300;
+REG_TEXT_BUFFER = 10;
 
 // Code to create rlcs bump chart
 
@@ -33,6 +37,8 @@ regionFormName = {
   'na':'North America',
   'eu':'Europe'
 }
+regionFormNameKeys = Object.keys(regionFormName)
+
 
 // Add d3 brush stuff
 
@@ -55,7 +61,7 @@ var toolTip = d3.tip()
 svg.call(toolTip);
 
 function onHover(e) {
-  svg.selectAll('.teams')
+  bumpSvg.selectAll('.teams')
     .classed('dimmed', function(d) {
       return d.team !== e.team;
     });
@@ -63,7 +69,7 @@ function onHover(e) {
 }
 
 function offHover(e) {
-  svg.selectAll('.teams')
+  bumpSvg.selectAll('.teams')
     .classed('dimmed', false);
   return toolTip.hide(e);
 }
@@ -79,7 +85,6 @@ BumpTeam.prototype.init = function() {
 }
 
 BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScale) {
-  console.log(this);
   this_data = data[teamColorMap[this.team] - 1].values;
   first_data = this_data[0];
   last_data = this_data[this_data.length - 1];
@@ -208,27 +213,131 @@ var teamObjects = [];
 
 d3.csv('../data/rlcs_all_ranks.csv').then(function(dataset) {
   rlcs_ranks = dataset;
+  bumpSvg = svg.append('g')
+    .attr('class', 'bumpSvg')
 
-  var reg_sel = document.getElementById('regionAttrSelector');
-  console.log(reg_sel);
-  reg_sel.addEventListener('change', updateChart);
-
-  updateChart()
+  updateChart('na')
 });
 
-function updateChart() {
+
+function delSelections() {
+  var selections = document.querySelectorAll('.selections');
+
+  selections.forEach(selection => {
+    selection.remove();
+  });
+}
+
+function delSelectionsOutside() {
+  selectionBounds = {
+    'x1':svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER,
+    'x2':svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER + REG_SEL_WIDTH,
+    'y1':REG_SEL_HEIGHT / 4,
+    'y2':REG_SEL_HEIGHT / 4 + REG_SEL_HEIGHT * (regionFormNameKeys.length+1)
+  }
+  if ((this_pos[0] < selectionBounds['x1'] || this_pos[0] > selectionBounds['x2']) ||
+      (this_pos[1] < selectionBounds['y1'] || this_pos[1] > selectionBounds['y2'])) {
+    delSelections();
+  }
+}
+
+function genSelections(g, current_region) {
+
+  var sels = g.append('g')
+    .attr('class', 'selections')
+
+
+  for (var i = 0; i < regionFormNameKeys.length; i++) {
+    var new_sel = sels.append('g')
+    new_sel.append('rect')
+      .attr('width', REG_SEL_WIDTH)
+      .attr('height', REG_SEL_HEIGHT)
+      .attr(
+        'transform',
+        `translate(
+          ${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER},
+          ${REG_SEL_HEIGHT / 4 + REG_SEL_HEIGHT * (i+1)}
+        )`
+      );
+
+    new_sel.append('text')
+      .text(regionFormName[regionFormNameKeys[i]])
+      .attr(
+        'transform',
+        `translate(
+          ${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER + REG_TEXT_BUFFER},
+          ${REG_SEL_HEIGHT * 15/16 + REG_SEL_HEIGHT * (i+1)}
+        )`
+      )
+      .attr('class', 'regText dimmed')
+
+
+    if (regionFormNameKeys[i] === current_region) {
+      new_sel.classed('bolden', true);
+    }
+
+    new_sel.on('mouseover', function() {
+      this.children[1].classList.remove('dimmed');
+    })
+      .on('mouseout', function() {
+        this.children[1].classList.add('dimmed');
+      })
+      .on('click', function() {
+        current_region = Object.keys(regionFormName).find(key => regionFormName[key] === this.children[1].textContent);
+        delSelections();
+        updateChart(current_region);
+      })
+  }
+}
+
+function genRelSel(current_region) {
+  var regSel = svg.append('g')
+    .attr('class', 'regSel')
+
+  regSel.append('rect')
+    .attr('width', REG_SEL_WIDTH)
+    .attr('height', REG_SEL_HEIGHT)
+    .attr('transform', `translate(${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT / 4})`);
+
+  regSel.append('text')
+    .text(regionFormName[current_region])
+    .attr('transform', function() {
+      return `translate(${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER + REG_TEXT_BUFFER}, ${REG_SEL_HEIGHT * 15/16})`;
+    })
+    .attr('class', 'regText')
+
+  var selector = regSel.append('g')
+    .attr('class', 'selector')
+
+  selector.append('rect')
+    .attr('width', REG_SEL_HEIGHT)
+    .attr('height', REG_SEL_HEIGHT)
+    .attr('transform', `translate(${svgWidth - REG_SEL_HEIGHT - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT / 4})`);
+
+  selector.append('polygon')
+    .attr('points', `
+    ${svgWidth - (REG_SEL_HEIGHT * 3/4) - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT * 9/16}
+    ${svgWidth - (REG_SEL_HEIGHT * 1/4) - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT * 9/16}
+    ${svgWidth - (REG_SEL_HEIGHT * 2/4) - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT}
+    `)
+    .style('fill', 'black');
+
+  selector.on('click', function() {genSelections(regSel, current_region)});
+  d3.select("body").on('click', delSelectionsOutside);
+}
+
+function updateChart(current_region) {
   // remove all elements from svg
-  var svg_node = document.getElementById("bumpSvg");
-  while (svg_node.firstChild) {
-    svg_node.removeChild(svg_node.firstChild);
+
+  var bumpSvg_node = document.querySelector(".bumpSvg");
+  while (bumpSvg_node.firstChild) {
+    bumpSvg_node.removeChild(bumpSvg_node.firstChild);
   }
 
-  var reg_sel = document.getElementById('regionAttrSelector');
-  current_region = reg_sel.value;
 
-  console.log(current_region);
+  genRelSel(current_region);
 
-  svg.append('text').attr('class', 'mainTitle')
+  bumpSvg.append('text').attr('class', 'mainTitle')
     .text(`RLCS Season 2021-2022 ${regionFormName[current_region]} Worlds Points`)
     .attr('transform', 'translate(10, 44)');
 
@@ -267,7 +376,7 @@ function updateChart() {
   var rankScale = d3.scaleLinear()
     .domain([1, maxRank]).range([svgMargin.t, svgHeight - svgMargin.b]);
 
-    svg.append('g').attr('class', 'x axis')
+    bumpSvg.append('g').attr('class', 'x axis')
     .attr('transform', function(d) {
       box = this.getBoundingClientRect();
       tranX = svgMargin.l;
@@ -296,7 +405,7 @@ function updateChart() {
     );
   }
 
-  var teamEnter = svg.selectAll('.teams')
+  var teamEnter = bumpSvg.selectAll('.teams')
     .data(teamObjects)
     .enter()
     .append('g')
