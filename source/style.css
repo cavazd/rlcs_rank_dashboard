@@ -15,3 +15,26 @@
   text-align: left;
   font-weight: bold;
 }
+
+.dimmed {
+  opacity: 0.25;
+}
+
+.bumpLine {
+  stroke-width: 4px;
+}
+
+.toolTip {
+  background-color: white;
+  padding-left: 8px;
+  padding-right: 8px;
+  border: 1px solid;
+}
+
+.bolden {
+  font-weight: bold;
+}
+
+.x {
+  font-size: 12px;
+}
