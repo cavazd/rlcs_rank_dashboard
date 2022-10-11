@@ -1,0 +1,17 @@
+.teamText {
+  font-size: 14px;
+  color: black;
+  text-anchor: middle;
+}
+
+.leftName {
+  font-size: 14px;
+  color: black;
+  text-align: right;
+}
+
+.mainTitle {
+  font-size: 44px;
+  text-align: left;
+  font-weight: bold;
+}
