@@ -11,7 +11,7 @@ rm(list=ls())
 # load in data for the given region
 # -------------------------
 
-region <- "na"
+region <- "eu"
 
 score_df <- read.csv(
   file = paste0("../data/rlcs_", region, "_points.csv"),
