@@ -46,6 +46,11 @@ for (event in 1:num_events) {
   rank_df <- rbind(rank_df, temp_df)
 }
 
+rank_df <- score_df %>% 
+  pivot_longer(-team, names_to = "eventname", values_to = "score_change") %>% 
+  right_join(rank_df, by = c("team", "eventname")) %>% 
+  mutate(region = region)
+
 # write transformed data to a new csv file
 # -------------------------
 write.csv(
@@ -53,5 +58,4 @@ write.csv(
   file = paste0("../data/rlcs_", region, "_ranks.csv"),
   row.names = F
 )
-
 

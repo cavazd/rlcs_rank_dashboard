@@ -2,10 +2,13 @@
 
 BUMP_CIRC_RAD = 10;
 AXIS_TEXT_BUFFER = 15;
-REG_SEL_BUFFER = 30;
+REG_SEL_BUFFER = 180;
 REG_SEL_HEIGHT = 40;
-REG_SEL_WIDTH = 300;
+REG_SEL_WIDTH = 200;
 REG_TEXT_BUFFER = 10;
+LEGEND_WIDTH = 140;
+LEGEND_HEIGHT = REG_SEL_HEIGHT;
+LEGEND_BUFFER = REG_SEL_BUFFER * 7/8;
 
 // Code to create rlcs bump chart
 
@@ -157,6 +160,9 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
       if (i != 0) {
         return rankScale(parseInt(d.ranking)) + yAxisTranY;
       }
+    })
+    .classed('deduct', function(d, i) {
+      return ((i !== 0) && (parseInt(d.score_change) < 0));
     });
 
   lines.exit().remove();
@@ -216,6 +222,48 @@ d3.csv('../data/rlcs_all_ranks.csv').then(function(dataset) {
   bumpSvg = svg.append('g')
     .attr('class', 'bumpSvg')
 
+  var legend = svg.append('g').attr('class', 'legend');
+
+  legend.append('rect')
+    .attr('width', LEGEND_WIDTH)
+    .attr('height', LEGEND_HEIGHT)
+    .attr('class', 'legRect')
+    .attr('transform', `translate(
+      ${svgWidth - LEGEND_BUFFER}, ${REG_SEL_HEIGHT / 4}
+    )`);
+
+  legend.append('line')
+    .attr('x1', svgWidth - LEGEND_BUFFER + REG_TEXT_BUFFER - 5)
+    .attr('x2', svgWidth - LEGEND_BUFFER + REG_TEXT_BUFFER + 40)
+    .attr('y1', REG_SEL_HEIGHT * 3/4)
+    .attr('y2', REG_SEL_HEIGHT * 3/4)
+    .attr('class', 'legLine deduct');
+
+  legend.append('text')
+    .text('=')
+    .attr('transform', `translate(
+      ${svgWidth - LEGEND_BUFFER + REG_TEXT_BUFFER + 43},
+      ${REG_SEL_HEIGHT * 3/4 + 4}
+    )`)
+    .attr('class', 'legText');
+
+  legend.append('text')
+    .text('Deduction due')
+    .attr('transform', `translate(
+      ${svgWidth - LEGEND_BUFFER + REG_TEXT_BUFFER + 53},
+      ${REG_SEL_HEIGHT * 3/4 - 4}
+    )`)
+    .attr('class', 'legText');
+
+  legend.append('text')
+    .text('to team change')
+    .attr('transform', `translate(
+      ${svgWidth - LEGEND_BUFFER + REG_TEXT_BUFFER + 53},
+      ${REG_SEL_HEIGHT * 3/4 + 8}
+    )`)
+    .attr('class', 'legText');
+
+
   updateChart('na')
 });
 
@@ -235,6 +283,7 @@ function delSelectionsOutside() {
     'y1':REG_SEL_HEIGHT / 4,
     'y2':REG_SEL_HEIGHT / 4 + REG_SEL_HEIGHT * (regionFormNameKeys.length+1)
   }
+  this_pos = d3.mouse(this);
   if ((this_pos[0] < selectionBounds['x1'] || this_pos[0] > selectionBounds['x2']) ||
       (this_pos[1] < selectionBounds['y1'] || this_pos[1] > selectionBounds['y2'])) {
     delSelections();

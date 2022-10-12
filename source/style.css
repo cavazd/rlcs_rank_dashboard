@@ -11,7 +11,7 @@
 }
 
 .mainTitle {
-  font-size: 44px;
+  font-size: 42px;
   text-align: left;
   font-weight: bold;
 }
@@ -39,7 +39,7 @@
   font-size: 12px;
 }
 
-.regSel {
+.regSel, .legRect {
   fill: White;
   stroke: black;
 }
@@ -47,18 +47,19 @@
 .regText {
   fill: black;
   stroke: none;
-  font-size: 26px;
+  font-size: 20px;
 }
 
-/* #regBtn {
-  position: absolute;
-  top: 28px;
-  right: 350px;
-  font-size: 28px;
+.deduct {
+  stroke-dasharray: 10,2;
 }
 
-#regionAttrSelector {
-  position: absolute;
-  top: 28px;
-  right: 200px;
-} */
+.legLine {
+  stroke: black;
+  stroke-width: 8px;
+}
+
+.legText {
+  color: black;
+  font-size: 12px;
+}
