@@ -11,12 +11,14 @@ rm(list=ls())
 # load in data for the given region
 # -------------------------
 
-region <- "eu"
+region <- "ssa"
 
 score_df <- read.csv(
   file = paste0("../data/rlcs_", region, "_points.csv"),
   stringsAsFactors = T,
 )
+
+score_df <- score_df %>% select(!starts_with('deduction'))
 
 # create empty dataframe for dataframe stacking
 # -------------------------

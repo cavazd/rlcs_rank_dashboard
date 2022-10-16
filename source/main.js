@@ -9,6 +9,9 @@ REG_TEXT_BUFFER = 10;
 LEGEND_WIDTH = 140;
 LEGEND_HEIGHT = REG_SEL_HEIGHT;
 LEGEND_BUFFER = REG_SEL_BUFFER * 7/8;
+EVENT_MIN = 1;
+EVENT_MAX = 12;
+TOP_N = 30;
 
 // Code to create rlcs bump chart
 
@@ -38,7 +41,13 @@ eventFormName = {
 
 regionFormName = {
   'na':'North America',
-  'eu':'Europe'
+  'eu':'Europe',
+  'oce':'Oceania',
+  'sam':'South America',
+  'mena':'MENA',
+  'apacn':'APAC North',
+  'apacs':'APAC South',
+  'ssa':'SSA'
 }
 regionFormNameKeys = Object.keys(regionFormName)
 
@@ -110,6 +119,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
         ${rankScale(parseInt(first_data.ranking)) - BUMP_CIRC_RAD})
       `)
     })
+    .classed('moreTopN', function() {  return first_data.ranking > TOP_N;  });
 
   teamG.append('text')
     .attr('class', 'rightName')
@@ -122,7 +132,8 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
       translate(${eventScale(this_data.length) + svgMargin.l + AXIS_TEXT_BUFFER},
       ${rankScale(parseInt(last_data.ranking)) - BUMP_CIRC_RAD})
       `)
-    });
+    })
+    .classed('moreTopN', function() {  return last_data.ranking > TOP_N;  });
 
   //draw lines
 
@@ -143,12 +154,23 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
   lines.merge(linesEnter)
     .attr("x1", function(d, i) {
       if (i != 0) {
-        return eventScale(parseInt(this_data[i-1].event)) + svgMargin.l;
+        this_event = this_data[i-1].event;
+        if (this_data[i-1].ranking > TOP_N) {
+          x1 = this_event;
+        } else {
+          x1 = this_event;
+        }
+        return eventScale(x1) + svgMargin.l;
       }
     })
     .attr("y1", function(d, i) {
       if (i != 0) {
-        return rankScale(parseInt(this_data[i-1].ranking)) + yAxisTranY;
+        if (this_data[i-1].ranking > TOP_N) {
+          y1 = TOP_N;
+        } else {
+          y1 = parseInt(this_data[i-1].ranking)
+        }
+        return rankScale(y1) + yAxisTranY;
       }
     })
     .attr("x2", function(d, i) {
@@ -163,6 +185,9 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
     })
     .classed('deduct', function(d, i) {
       return ((i !== 0) && (parseInt(d.score_change) < 0));
+    })
+    .classed('moreTopN', function(d) {
+      return d.ranking > TOP_N;
     });
 
   lines.exit().remove();
@@ -205,9 +230,14 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
 
   dots.merge(dotsEnter)
     .attr('transform', function(d) {
+      if (d.ranking > TOP_N) {
+        yTran = 700;
+      } else {
+        yTran = rankScale(parseInt(d.ranking)) + yAxisTranY;
+      }
       return `translate(
         ${eventScale(parseInt(d.event)) + svgMargin.l},
-        ${rankScale(parseInt(d.ranking)) + yAxisTranY}
+        ${yTran}
       )`;
     });
 
@@ -391,7 +421,7 @@ function updateChart(current_region) {
     .attr('transform', 'translate(10, 44)');
 
   var filtData = rlcs_ranks.filter(function(d) {
-    return d.region === current_region;
+    return d.region === current_region; // && d.ranking <= TOP_N;
   })
 
   var nestedEvents = d3.nest()
@@ -413,12 +443,11 @@ function updateChart(current_region) {
   }
 
   // Set up axis for the bump chart
-  var eventMax = d3.max(filtData, function(d) { return parseInt(d.event); } );
-  var eventMin = d3.min(filtData, function(d) { return parseInt(d.event); } );
   var maxRank = d3.max(filtData, function(d){return parseInt(d.ranking);});
+  maxRank = maxRank > TOP_N ? TOP_N : maxRank;
 
   var eventScale = d3.scaleLinear()
-    .domain([eventMin, eventMax]).range(
+    .domain([EVENT_MIN, EVENT_MAX]).range(
       [svgMargin.l, svgWidth - (svgMargin.r + svgMargin.l * 2)]
     );
 

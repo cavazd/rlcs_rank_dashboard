@@ -9,7 +9,7 @@ library(tidyverse)
 rm(list=ls())
 
 # hard coded list of regions
-regions = c('na', 'eu')
+regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apacn', 'apacs', 'ssa')
 
 # create empty full dataframe
 full_df <- data.frame()
