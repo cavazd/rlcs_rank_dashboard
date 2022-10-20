@@ -67,3 +67,15 @@
 .moreTopN {
   display: none;
 }
+
+.info {
+  font-size: 14px;
+  text-decoration-line: underline;
+  fill: blue;
+  cursor: pointer;
+}
+
+.infoVisited {
+  fill: purple;
+  text-decoration-line: underline;
+}

@@ -1,4 +1,3 @@
-//py -m http.server
 /*
 Title: RLCS Bump Chart Creation
 Developer: Daniel Cavazos (cavazd)
@@ -19,7 +18,13 @@ LEGEND_BUFFER = REG_SEL_BUFFER * 7/8;
 EVENT_MIN = 1;
 EVENT_MAX = 12;
 TOP_N = 30;
-YTRAN = 700;
+YTRAN = 800;
+Y_AXIS_TRAN_Y = BUMP_CIRC_RAD * -2;
+LIQUIPEDIA_RANK_LINK = (
+  'https://liquipedia.net/rocketleague/'
+  + 'Rocket_League_Championship_Series/2021-22/Rankings'
+);
+GITHUB_REPO_LINK = 'https://github.com/cavazd/rlcs_rank_dashboard';
 
 // Declare main svg
 var svg = d3.select('svg');
@@ -29,8 +34,7 @@ svgWidth = +svg.attr('width');
 svgHeight = +svg.attr('height');
 
 // declare margins for svg
-svgMargin = {'t':95, 'b':30, 'l':70, 'r':85};
-yAxisTranY = -(svgMargin.b / 2);
+svgMargin = {'t':95, 'b':50, 'l':70, 'r':85};
 
 //Tourn Formal Names
 eventFormName = {
@@ -154,7 +158,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
       box = this.getBoundingClientRect();
       return (`
         translate(${eventScale(1) + svgMargin.l - box.width - AXIS_TEXT_BUFFER},
-        ${rankScale(parseInt(first_data.ranking)) - BUMP_CIRC_RAD})
+        ${rankScale(parseInt(first_data.ranking)) - BUMP_CIRC_RAD * 3/2})
       `)
     })
     .classed('moreTopN', function() {  return first_data.ranking > TOP_N;  });
@@ -168,10 +172,12 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
       box = this.getBoundingClientRect();
       return (`
       translate(${eventScale(this_data.length) + svgMargin.l + AXIS_TEXT_BUFFER},
-      ${rankScale(parseInt(last_data.ranking)) - BUMP_CIRC_RAD})
+      ${rankScale(parseInt(last_data.ranking)) - BUMP_CIRC_RAD * 3/2})
       `)
     })
     .classed('moreTopN', function() {  return last_data.ranking > TOP_N;  });
+
+
 
   //draw lines between circles
   var teamLines = teamG.append('g') // create line group
@@ -207,7 +213,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
         } else {
           y1 = parseInt(this_data[i-1].ranking)
         }
-        return rankScale(y1) + yAxisTranY;
+        return rankScale(y1) + Y_AXIS_TRAN_Y;
       }
     })
     .attr("x2", function(d, i) {
@@ -217,7 +223,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
     })
     .attr("y2", function(d, i) {
       if (i != 0) {
-        return rankScale(parseInt(d.ranking)) + yAxisTranY;
+        return rankScale(parseInt(d.ranking)) + Y_AXIS_TRAN_Y;
       }
     })
     .classed('deduct', function(d, i) { // if the score change is negative, add deduct class
@@ -268,7 +274,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
       if (d.ranking > TOP_N) {
         yTran = YTRAN;
       } else {
-        yTran = rankScale(parseInt(d.ranking)) + yAxisTranY;
+        yTran = rankScale(parseInt(d.ranking)) + Y_AXIS_TRAN_Y;
       }
       return `translate(
         ${eventScale(parseInt(d.event)) + svgMargin.l},
@@ -328,6 +334,37 @@ d3.csv('../data/rlcs_all_ranks.csv').then(function(dataset) {
       ${REG_SEL_HEIGHT * 3/4 + 8}
     )`)
     .attr('class', 'legText');
+
+  var info = svg.append('g').attr('class', 'info'); // add info group
+
+  repo_distance = 0;
+  var repo_info = info.append('text')
+      .text('GitHub Repo')
+      .attr('transform', function() {
+        box = this.getBoundingClientRect();
+        repo_distance = svgWidth - box.width - REG_TEXT_BUFFER;
+        return `translate(${repo_distance}, ${svgHeight - BUMP_CIRC_RAD})`;
+      });
+
+  repo_info.on('click', function() {
+    this.classList.add('infoVisited');
+    window.open (GITHUB_REPO_LINK, '_blank');
+  });
+
+  var data_info = info.append('text')
+      .text('Team Ranking Data Source')
+      .attr('transform', function() {
+        box = this.getBoundingClientRect();
+        data_distance = repo_distance - box.width - REG_TEXT_BUFFER;
+        return `translate(${data_distance}, ${svgHeight - BUMP_CIRC_RAD})`
+      });
+
+  data_info.on('click', function() {
+    this.classList.add('infoVisited');
+    window.open (LIQUIPEDIA_RANK_LINK, '_blank');
+  });
+
+
 
 
   updateChart('na') // update the chart with North America as default region
