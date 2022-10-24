@@ -12,9 +12,10 @@ rm(list=ls())
 # -------------------------
 
 region <- "ssa"
+season <- '2021-2022'
 
 score_df <- read.csv(
-  file = paste0("../data/rlcs_", region, "_points.csv"),
+  file = paste0("../data/rlcs_", season, "/rlcs_", region, "_points.csv"),
   stringsAsFactors = T,
 )
 
@@ -57,7 +58,7 @@ rank_df <- score_df %>%
 # -------------------------
 write.csv(
   x = rank_df,
-  file = paste0("../data/rlcs_", region, "_ranks.csv"),
+  file = paste0("../data/rlcs_", season, "/rlcs_", region, "_ranks.csv"),
   row.names = F
 )
 

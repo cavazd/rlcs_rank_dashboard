@@ -9,7 +9,14 @@ library(tidyverse)
 rm(list=ls())
 
 # hard coded list of regions
-regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apacn', 'apacs', 'ssa')
+season <- '2021-2022'
+regions = c()
+if (season == '2020-2021') {
+  regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apacn', 'apacs', 'ssa')
+} else {
+  regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apac', 'ssa')
+}
+
 
 # create empty full dataframe
 full_df <- data.frame()
@@ -17,15 +24,17 @@ full_df <- data.frame()
 # go through each region and combine to one region
 for (i in 1:length(regions)) {
   this_df <- read.csv(
-    file = paste0("../data/rlcs_", regions[i], "_ranks.csv"),
+    file = paste0("../data/rlcs_", season, "/rlcs_", regions[i], "_ranks.csv"),
     stringsAsFactors = T,
   )
   full_df <- rbind(full_df, this_df)
 } 
 
+full_df <- full_df %>% mutate(season = season)
+
 # write full dataframe
 write.csv(
   x = full_df,
-  file = paste0("../data/rlcs_all_ranks.csv"),
+  file = paste0("../data/rlcs_", season, "/rlcs_all_ranks.csv"),
   row.names = F
 )
