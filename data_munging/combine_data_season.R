@@ -1,7 +1,7 @@
 # -------------------------
 # author: cavazd
 # date  : 10/11/2022
-# desc  : Code to code to combine rlcs bumpchart data
+# desc  : Code to code to combine rlcs bumpchart data by season
 # -------------------------
 
 # Load in tidyverse and remove and variables in environment
@@ -9,9 +9,9 @@ library(tidyverse)
 rm(list=ls())
 
 # hard coded list of regions
-season <- '2021-2022'
+season <- '2022-2023'
 regions = c()
-if (season == '2020-2021') {
+if (season == '2021-2022') {
   regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apacn', 'apacs', 'ssa')
 } else {
   regions = c('na', 'eu', 'oce', 'sam', 'mena', 'apac', 'ssa')

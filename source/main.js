@@ -4,7 +4,6 @@ Developer: Daniel Cavazos (cavazd)
 Date (YYYY/MM/DD): 2022/10/05
 */
 
-
 // Magic Numbers
 BUMP_CIRC_RAD = 10;
 AXIS_TEXT_BUFFER = 15;
@@ -20,11 +19,17 @@ EVENT_MAX = 12;
 TOP_N = 30;
 YTRAN = 800;
 Y_AXIS_TRAN_Y = BUMP_CIRC_RAD * -2;
+TAG_WIDTH = 100;
+TAG_HEIGHT = 25;
 LIQUIPEDIA_RANK_LINK = (
   'https://liquipedia.net/rocketleague/'
   + 'Rocket_League_Championship_Series/2021-22/Rankings'
 );
 GITHUB_REPO_LINK = 'https://github.com/cavazd/rlcs_rank_dashboard';
+
+// declare current_season global variable
+ALL_SEASONS = ['2021-2022', '2022-2023']
+current_season = ALL_SEASONS[ALL_SEASONS.length - 1];
 
 // Declare main svg
 var svg = d3.select('svg');
@@ -50,21 +55,65 @@ eventFormName = {
   'spr_reg2':'Spring Regional 2',
   'spr_reg3':'Spring Regional 3',
   'spr_maj':'Spring Major',
+  'fall_open':'Fall Open',
+  'fall_cup': 'Fall Cup',
+  'fall_invitational': 'Fall Invitational',
+  'fall_major': 'Fall Major',
+  'win_open':'Winter Open',
+  'win_cup': 'Winter Cup',
+  'win_invitational': 'Winter Invitational',
+  'win_major': 'Winter Major',
+  'spr_open':'Spring Open',
+  'spr_cup': 'Spring Cup',
+  'spr_invitational': 'Spring Invitational',
+  'spr_major': 'Spring Major'
 }
+
+eventOrder = {
+  '2021-2022': [
+    'fall_reg1', 'fall_reg2', 'fall_reg3', 'fall_maj', 'win_reg1', 'win_reg2',
+    'win_reg3', 'win_maj', 'spr_reg1', 'spr_reg2', 'spr_reg3', 'spr_maj'
+  ],
+  'else': [
+    'fall_open', 'fall_cup', 'fall_invitational', 'fall_major', 'win_open',
+    'win_cup', 'win_invitational', 'win_major', 'spr_open', 'spr_cup',
+    'spr_invitational', 'spr_major'
+  ]
+}
+currentEventOrder = current_season === '2021-2022' ?
+  eventOrder['2021-2022'] :
+  eventOrder['else'];
+
 
 // Region formal names
 regionFormName = {
-  'na':'North America',
-  'eu':'Europe',
-  'oce':'Oceania',
-  'sam':'South America',
-  'mena':'MENA',
-  'apacn':'APAC North',
-  'apacs':'APAC South',
-  'ssa':'SSA'
+  '2021-2022':{
+    'na':'North America',
+    'eu':'Europe',
+    'oce':'Oceania',
+    'sam':'South America',
+    'mena':'MENA',
+    'apacn':'APAC North',
+    'apacs':'APAC South',
+    'ssa':'SSA'
+  },
+  'else':{
+    'na':'North America',
+    'eu':'Europe',
+    'oce':'Oceania',
+    'sam':'South America',
+    'mena':'MENA',
+    'apac':"Asia-Pacific",
+    'ssa':'SSA'
+  }
 }
-regionFormNameKeys = Object.keys(regionFormName)
+regionFormNameKeys = current_season === '2021-2022' ?
+  Object.keys(regionFormName['2021-2022']) :
+  Object.keys(regionFormName['else']);
 
+currentFormName = current_season === '2021-2022' ?
+  regionFormName['2021-2022'] :
+  regionFormName['else'];
 
 // tooltip
 var toolTip = d3.tip()
@@ -157,7 +206,7 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
     .attr('transform', function() {
       box = this.getBoundingClientRect();
       return (`
-        translate(${eventScale(1) + svgMargin.l - box.width - AXIS_TEXT_BUFFER},
+        translate(${eventScale(EVENT_MIN) + svgMargin.l - box.width - AXIS_TEXT_BUFFER},
         ${rankScale(parseInt(first_data.ranking)) - BUMP_CIRC_RAD * 3/2})
       `)
     })
@@ -285,11 +334,17 @@ BumpTeam.prototype.update = function(g, data, teamColorMap, eventScale, rankScal
   dots.exit().remove(); // exit and remove
 }
 
+// define eventScale
+var eventScale = d3.scaleLinear()
+.domain([EVENT_MIN, EVENT_MAX]).range(
+  [svgMargin.l, svgWidth - (svgMargin.r + svgMargin.l * 2)]
+);
+
 // create array to store the team objects
 var teamObjects = [];
 
 // load in data
-d3.csv('../data/rlcs_all_ranks.csv').then(function(dataset) {
+d3.csv('../data/rlcs_full_ranks.csv').then(function(dataset) {
   rlcs_ranks = dataset; // store as global variable
   bumpSvg = svg.append('g') // create main group
     .attr('class', 'bumpSvg')
@@ -364,11 +419,69 @@ d3.csv('../data/rlcs_all_ranks.csv').then(function(dataset) {
     window.open (LIQUIPEDIA_RANK_LINK, '_blank');
   });
 
+  // add tabs to change between 2021-2022 and 2022-2023 seasons
+  var seasonTags = svg.append('g').attr('class', 'tags');
 
+  var thisSeasonsTag;
+
+  for (var i = 0; i < ALL_SEASONS.length; i++) {
+    thisSeasonsTag = seasonTags.append('g')
+      .attr('class', 'tag')
+      .attr('transform', `translate(${eventScale(EVENT_MIN) + svgMargin.l + (TAG_WIDTH * 1.25) * i},${svgHeight})`);
+
+    thisSeasonsTag.append('path')
+      .attr('d', `M0 0 L0 ${-TAG_HEIGHT} L${TAG_WIDTH} ${-TAG_HEIGHT} L${TAG_WIDTH} 0`)
+      .attr('class', 'tagPath')
+      .classed('tagClickedPath', function() {return ALL_SEASONS[i] === current_season;});
+
+
+    thisSeasonsTag.append('text')
+      .text(ALL_SEASONS[i])
+      .attr('class', 'tagText')
+      .classed('tagClickedText', function() {return ALL_SEASONS[i] === current_season;})
+      .attr('transform', function() {
+        box = this.getBoundingClientRect();
+        tranX = (TAG_WIDTH - box.width) / 2;
+        tranY = box.height / -4;
+        return `translate(${tranX},${tranY})`;
+      });
+
+
+    thisSeasonsTag.on('click', updateSeason);
+
+  }
 
 
   updateChart('na') // update the chart with North America as default region
 });
+
+/**
+* Update season and chart when a season tag is clicked
+*/
+function updateSeason() {
+  _this = this;
+  thisText = _this.children[1].textContent;
+  if (thisText !== current_season) {
+    // remove the clicked tag classes from the current selected tag
+    document.querySelector('.tagClickedPath')
+      .classList.remove('tagClickedPath');
+    document.querySelector('.tagClickedText')
+      .classList.remove('tagClickedText');
+
+    // add the clicked classes to the currently clicked on tag
+    _this.children[0].classList.add('tagClickedPath');
+    _this.children[1].classList.add('tagClickedText');
+
+    // update current season
+    current_season = thisText;
+
+    // update chart
+    current_region = Object.keys(currentFormName).find(
+      key => currentFormName[key] === document.querySelector('.regText').textContent
+    );
+    updateChart(current_region);
+  }
+}
 
 /**
 * Remove region selector selections from the screen
@@ -405,7 +518,6 @@ function delSelectionsOutside() {
 * @param {String} current_region
 */
 function genSelections(g, current_region) {
-
   var sels = g.append('g') // selections group
     .attr('class', 'selections')
 
@@ -425,7 +537,7 @@ function genSelections(g, current_region) {
 
     // Add region names
     new_sel.append('text')
-      .text(regionFormName[regionFormNameKeys[i]])
+      .text(currentFormName[regionFormNameKeys[i]])
       .attr(
         'transform',
         `translate(
@@ -449,8 +561,8 @@ function genSelections(g, current_region) {
       })
       .on('click', function() {
         // onclick, update the chart, set the current region, and delete the region selections
-        current_region = Object.keys(regionFormName).find(
-          key => regionFormName[key] === this.children[1].textContent
+        current_region = Object.keys(currentFormName).find(
+          key => currentFormName[key] === this.children[1].textContent
         );
         delSelections();
         updateChart(current_region);
@@ -472,7 +584,7 @@ function genRelSel(current_region) {
     .attr('transform', `translate(${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER}, ${REG_SEL_HEIGHT / 4})`);
 
   regSel.append('text')
-    .text(regionFormName[current_region])
+    .text(currentFormName[current_region])
     .attr('transform', function() {
       return `translate(${svgWidth - REG_SEL_WIDTH - REG_SEL_BUFFER + REG_TEXT_BUFFER}, ${REG_SEL_HEIGHT * 15/16})`;
     })
@@ -516,12 +628,12 @@ function updateChart(current_region) {
 
   // Create main title
   bumpSvg.append('text').attr('class', 'mainTitle')
-    .text(`RLCS Season 2021-2022 ${regionFormName[current_region]} Worlds Points`)
+    .text(`RLCS Season ${current_season} ${currentFormName[current_region]} Worlds Points`)
     .attr('transform', 'translate(10, 44)');
 
   // filter the data for regions equal to the current region
   var filtData = rlcs_ranks.filter(function(d) {
-    return d.region === current_region;
+    return (d.region === current_region && d.season === current_season);
   })
 
   // nest data to events
@@ -530,7 +642,6 @@ function updateChart(current_region) {
       return c.event;
     })
     .entries(filtData);
-
   // nest data to teams
   var nestedTeams = d3.nest()
     .key(function(v) {
@@ -552,12 +663,6 @@ function updateChart(current_region) {
   // if the maxRank is greater than the Top N, use Top N
   maxRank = maxRank > TOP_N ? TOP_N : maxRank;
 
-  // define eventScale
-  var eventScale = d3.scaleLinear()
-    .domain([EVENT_MIN, EVENT_MAX]).range(
-      [svgMargin.l, svgWidth - (svgMargin.r + svgMargin.l * 2)]
-    );
-
   // define rankScale
   var rankScale = d3.scaleLinear()
     .domain([1, maxRank]).range([svgMargin.t, svgHeight - svgMargin.b]);
@@ -572,7 +677,7 @@ function updateChart(current_region) {
       return `translate(${tranX}, ${tranY})`;
     })
     .call(d3.axisBottom(eventScale).tickFormat(function(d){
-      return eventFormName[nestedEvents[d-1].values[0].eventname];
+      return eventFormName[currentEventOrder[d-1]];
     }));
 
 

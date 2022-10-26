@@ -79,3 +79,24 @@
   fill: purple;
   text-decoration-line: underline;
 }
+
+.tagPath {
+  fill: white;
+  stroke: black;
+}
+
+.tagText {
+  font-size: 17px;
+}
+
+.tagClickedPath {
+  fill: lightgray;
+}
+
+.tagClickedText {
+  font-weight: bold;
+}
+
+.tag:hover {
+  cursor: pointer;
+}

@@ -12,7 +12,7 @@ rm(list=ls())
 # -------------------------
 
 region <- "ssa"
-season <- '2021-2022'
+season <- '2022-2023'
 
 score_df <- read.csv(
   file = paste0("../data/rlcs_", season, "/rlcs_", region, "_points.csv"),
